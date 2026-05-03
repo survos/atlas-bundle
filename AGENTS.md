@@ -20,13 +20,19 @@ It is **not**:
 
 1. **Attributes are stored as `['class' => FQCN, 'args' => array]`, never as instantiated objects.** This keeps the snapshot trivially serializable (for `atlas:export`) and means a broken/missing attribute class can't blow up the Atlas. If you need typed access, instantiate in the consumer.
 
-2. **A `#[Route]` without an explicit `name:` is skipped.** Atlas needs a stable identifier and won't guess at Symfony's name-derivation rules. This is intentional — document it in the consumer if a user runs into it.
+2. **Atlas only records attributes from a known allowlist** (`AttributeFilter::DEFAULT_NAMESPACES`): `Survos\`, `Symfony\Component\Routing\Attribute\`, `Symfony\Component\Security\Http\Attribute\`, `Symfony\Bridge\Twig\Attribute\`, `App\Attribute\`. Everything else — most importantly ApiPlatform's elaborate `#[ApiResource]` / `#[Get]` / etc. — is silently filtered out. This is **deliberate**, not an oversight: ApiPlatform's attribute universe is huge and deeply nested (operations contain Get/Post/Patch instances), and analyzing it belongs in `survos/inspection-bundle` (or its api-inspection-bundle successor), not here. Atlas's scope is "metadata that drives survos features," not "every attribute on every method." Don't add ApiPlatform / Doctrine / third-party prefixes to the allowlist without revisiting the layering.
 
-3. **Builders (`ControllerAtlasBuilder`, `EntityAtlasBuilder`) are pure compile-time helpers.** They are not services, do not get registered in the container, and have no runtime dependencies. Consumers may call them directly from their own compiler pass, or they may read the populated `Atlas` service.
+3. **No attribute-args sanitizer.** Because of #2, every recorded attribute has args that are scalar / enum / array-of-string, so `new Foo(...$args)` always works for consumers. If you find yourself reaching for recursive object-to-array sanitization, that's a sign the allowlist needs to be tighter, not that the storage shape needs to grow.
 
-4. **`Atlas` is immutable after construction.** No `add*()` / `set*()` methods. The whole point of a compile-time atlas is that the snapshot is fixed.
+4. **The compiled container holds plain arrays, not `RouteEntry` / `EntityEntry` objects.** Symfony's XmlDumper rejects arbitrary objects in service arguments. `AtlasPass` emits arrays; `Atlas::__construct` reconstitutes the DTOs. Boot cost is sub-millisecond.
 
-5. **The bundle ships exactly one console command: `atlas:export`.** No `atlas:list`, no `atlas:show`, no `atlas:diff`. Tabular browsing is a downstream concern. If a consumer wants a richer view, they ship their own command.
+5. **A `#[Route]` without an explicit `name:` is skipped.** Atlas needs a stable identifier and won't guess at Symfony's name-derivation rules. This is intentional — document it in the consumer if a user runs into it.
+
+6. **Builders (`ControllerAtlasBuilder`, `EntityAtlasBuilder`) are pure compile-time helpers.** They are not services, do not get registered in the container, and have no runtime dependencies. Consumers may call them directly from their own compiler pass, or they may read the populated `Atlas` service.
+
+7. **`Atlas` is immutable after construction.** No `add*()` / `set*()` methods. The whole point of a compile-time atlas is that the snapshot is fixed.
+
+8. **The bundle ships exactly one console command: `atlas:export`.** No `atlas:list`, no `atlas:show`, no `atlas:diff`. Tabular browsing is a downstream concern. If a consumer wants a richer view, they ship their own command.
 
 ## Adding a new attribute kind
 

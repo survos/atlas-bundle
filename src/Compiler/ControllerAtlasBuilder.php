@@ -83,6 +83,9 @@ final class ControllerAtlasBuilder
     {
         $out = [];
         foreach ($reflAttrs as $a) {
+            if (!AttributeFilter::accepts($a->getName())) {
+                continue;
+            }
             $out[] = [
                 'class' => $a->getName(),
                 'args'  => $a->getArguments(),

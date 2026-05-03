@@ -35,6 +35,9 @@
         "symfony/framework-bundle": "^8.0"
     },
     "extra": {
+        "branch-alias": {
+            "dev-main": "2.0-dev"
+        },
         "symfony": {
             "require": "^8.0"
         }

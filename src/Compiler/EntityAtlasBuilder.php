@@ -50,6 +50,9 @@ final class EntityAtlasBuilder
 
                 $classAttrs = [];
                 foreach ($rc->getAttributes() as $a) {
+                    if (!AttributeFilter::accepts($a->getName())) {
+                        continue;
+                    }
                     $classAttrs[] = [
                         'class' => $a->getName(),
                         'args'  => $a->getArguments(),

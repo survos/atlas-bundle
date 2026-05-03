@@ -10,9 +10,19 @@ use Survos\AtlasBundle\Model\RouteEntry;
 /**
  * Runtime snapshot of everything the AtlasPass discovered at compile time.
  * Consumers ask the Atlas for routes/entities; nothing is rescanned at runtime.
+ *
+ * The compiled container stores entries as plain arrays (XmlDumper refuses
+ * arbitrary objects); the constructor reconstitutes them into typed DTOs.
+ * Cost is a single array_map at boot — sub-millisecond for typical apps.
  */
 final class Atlas
 {
+    /** @var list<RouteEntry> */
+    private readonly array $routes;
+
+    /** @var list<EntityEntry> */
+    private readonly array $entities;
+
     /** @var array<string, RouteEntry> */
     private readonly array $routesByName;
 
@@ -20,21 +30,37 @@ final class Atlas
     private readonly array $entitiesByClass;
 
     /**
-     * @param list<RouteEntry>  $routes
-     * @param list<EntityEntry> $entities
+     * @param list<array<string, mixed>> $routes
+     * @param list<array<string, mixed>> $entities
      */
     public function __construct(
-        private readonly array $routes = [],
-        private readonly array $entities = [],
+        array $routes = [],
+        array $entities = [],
     ) {
+        $this->routes = array_map(static fn (array $r) => new RouteEntry(
+            name:             $r['name'],
+            path:             $r['path'],
+            methods:          $r['methods'],
+            controllerClass:  $r['controllerClass'],
+            methodName:       $r['methodName'],
+            methodAttributes: $r['methodAttributes'],
+            classAttributes:  $r['classAttributes'],
+        ), $routes);
+
+        $this->entities = array_map(static fn (array $e) => new EntityEntry(
+            fqcn:            $e['fqcn'],
+            shortName:       $e['shortName'],
+            classAttributes: $e['classAttributes'],
+        ), $entities);
+
         $byName = [];
-        foreach ($routes as $r) {
+        foreach ($this->routes as $r) {
             $byName[$r->name] = $r;
         }
         $this->routesByName = $byName;
 
         $byClass = [];
-        foreach ($entities as $e) {
+        foreach ($this->entities as $e) {
             $byClass[$e->fqcn] = $e;
         }
         $this->entitiesByClass = $byClass;
