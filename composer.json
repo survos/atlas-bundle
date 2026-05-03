@@ -1,0 +1,42 @@
+{
+    "name": "survos/atlas-bundle",
+    "description": "Compile-time discovery of controllers, routes, and entities — the atlas the rest of survos draws maps from.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": ["symfony", "atlas", "discovery", "compile-time", "registry", "routes", "entities", "attributes"],
+    "authors": [
+        {
+            "name": "Tac Tacelosky",
+            "email": "tacman@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Survos\\AtlasBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Survos\\AtlasBundle\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.4",
+        "symfony/config": "^8.0",
+        "symfony/console": "^8.0",
+        "symfony/dependency-injection": "^8.0",
+        "symfony/finder": "^8.0",
+        "symfony/http-kernel": "^8.0",
+        "symfony/routing": "^8.0",
+        "symfony/yaml": "^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.0",
+        "symfony/framework-bundle": "^8.0"
+    },
+    "extra": {
+        "symfony": {
+            "require": "^8.0"
+        }
+    }
+}
