@@ -88,7 +88,7 @@ final class ControllerAtlasBuilder
             }
             $out[] = [
                 'class' => $a->getName(),
-                'args'  => $a->getArguments(),
+                'args'  => array_map(AttributeData::serialize(...), $a->getArguments()),
             ];
         }
         return $out;
