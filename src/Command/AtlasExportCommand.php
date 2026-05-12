@@ -8,39 +8,26 @@ use Survos\AtlasBundle\Model\EntityEntry;
 use Survos\AtlasBundle\Model\RouteEntry;
 use Survos\AtlasBundle\Service\Atlas;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 
-#[AsCommand(
-    name: 'atlas:export',
-    description: 'Dump the discovered atlas (routes + entities + their attributes) as JSON or YAML.',
-)]
-final class AtlasExportCommand extends Command
+#[AsCommand('atlas:export', 'Dump the discovered atlas (routes + entities + their attributes) as JSON or YAML.')]
+final class AtlasExportCommand
 {
     public function __construct(
         private readonly Atlas $atlas,
     ) {
-        parent::__construct();
     }
 
-    protected function configure(): void
-    {
-        $this
-            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'json|yaml', 'json')
-            ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Write to file instead of stdout')
-            ->addOption('pretty', null, InputOption::VALUE_NONE, 'Pretty-print JSON');
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $io      = new SymfonyStyle($input, $output);
-        $format  = strtolower((string) $input->getOption('format'));
-        $target  = $input->getOption('output');
-        $pretty  = (bool) $input->getOption('pretty');
+    public function __invoke(
+        SymfonyStyle $io,
+        #[Option('json|yaml')] string $format = 'json',
+        #[Option('Write to file instead of stdout')] ?string $output = null,
+        #[Option('Pretty-print JSON')] bool $pretty = false,
+    ): int {
+        $format = strtolower($format);
 
         $payload = [
             'routes'   => array_map(self::serializeRoute(...), $this->atlas->routes()),
@@ -58,19 +45,17 @@ final class AtlasExportCommand extends Command
             return Command::INVALID;
         }
 
-        if (\is_string($target) && $target !== '') {
-            file_put_contents($target, $serialized);
-            $io->success(sprintf('Wrote %d routes and %d entities to %s', \count($payload['routes']), \count($payload['entities']), $target));
+        if ($output !== null && $output !== '') {
+            file_put_contents($output, $serialized);
+            $io->success(sprintf('Wrote %d routes and %d entities to %s', \count($payload['routes']), \count($payload['entities']), $output));
             return Command::SUCCESS;
         }
 
-        $output->writeln($serialized);
+        $io->writeln($serialized);
         return Command::SUCCESS;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function serializeRoute(RouteEntry $r): array
     {
         return [
@@ -83,9 +68,7 @@ final class AtlasExportCommand extends Command
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function serializeEntity(EntityEntry $e): array
     {
         return [
