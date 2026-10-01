@@ -95,15 +95,25 @@ final class EntityAtlasBuilder
             $dirs[] = $appEntityDir;
         }
 
-        foreach ((array) $container->getParameter('kernel.bundles') as $bundleClass) {
-            try {
-                $bundleDir = \dirname((new \ReflectionClass($bundleClass))->getFileName());
-            } catch (\ReflectionException) {
-                continue;
+        $bundleMetadata = $container->hasParameter('kernel.bundles_metadata')
+            ? (array) $container->getParameter('kernel.bundles_metadata')
+            : [];
+
+        foreach ((array) $container->getParameter('kernel.bundles') as $bundleName => $bundleClass) {
+            // Metadata preserves the bundle's path when Symfony exposes a BundleAdapter class.
+            $bundleDir = $bundleMetadata[$bundleName]['path'] ?? null;
+            if ($bundleDir === null) {
+                try {
+                    $bundleDir = \dirname((new \ReflectionClass($bundleClass))->getFileName());
+                } catch (\ReflectionException) {
+                    continue;
+                }
             }
-            $entityDir = $bundleDir . '/Entity';
-            if (\is_dir($entityDir)) {
-                $dirs[] = $entityDir;
+            // AbstractBundle paths point to the package root; legacy bundles may use src/ itself.
+            foreach ([$bundleDir . '/src/Entity', $bundleDir . '/Entity'] as $entityDir) {
+                if (\is_dir($entityDir)) {
+                    $dirs[] = $entityDir;
+                }
             }
         }
 
