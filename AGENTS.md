@@ -49,4 +49,4 @@ If you need to discover something other than controllers and entities (e.g. mess
 
 ## Symfony version
 
-Symfony 8 only (`^8.0`). PHP 8.4+. Do not add `^7.0` constraints on a "just in case" basis.
+Symfony `^7.4||^8.1`, including the Symfony 7.4 application compatibility required by Lingua. PHP 8.5+. Validate discovery on both supported Symfony lines.
